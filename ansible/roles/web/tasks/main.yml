@@ -12,6 +12,9 @@
     - php5-cli
     - nginx
 
+- name: Ensure php-fpm log directory exists
+  file: path=/var/log/php-fpm state=directory
+
 - name: Ensures services are started
   service: name='$item' state=started
   with_items:
@@ -30,14 +33,14 @@
 - name: Ensures nginx vhosts are at the latest version.
   template: src='$item' dest=/etc/nginx/sites-enabled/
   with_fileglob:
-    - sites-enabled/*
+    - ../templates/sites-enabled/*
   notify:
     - check nginx conf
     - reload nginx
 
-- name: Ensures nginx vhosts are at the latest version.
-  template: src='$item' dest=/etc/php5/fpm-d/
+- name: Ensures php-fpm pools are at the latest version.
+  template: src='$item' dest=/etc/php5/fpm/pool.d/
   with_fileglob:
-    - fpm.d/*
+    - ../templates/fpm.d/*
   notify:
     - reload php-fpm
