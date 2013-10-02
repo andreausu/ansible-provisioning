@@ -41,6 +41,6 @@
 - name: Ensures php-fpm pools are at the latest version.
   template: src='$item' dest=/etc/php5/fpm/pool.d/
   with_fileglob:
-    - ../templates/fpm.d/*
+    - ../templates/php/fpm.d/*
   notify:
     - reload php-fpm
