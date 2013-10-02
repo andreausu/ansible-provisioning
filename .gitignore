@@ -1,2 +1,9 @@
+# Vagrant
 vagrant/gitlab/.vagrant/
 vagrant/snake/.vagrant/
+
+# Vars
+vagrant/gitlab/development_vars.yml
+vagrant/gitlab/production_vars.yml
+vagrant/snake/development_vars.yml
+vagrant/snake/production_vars.yml

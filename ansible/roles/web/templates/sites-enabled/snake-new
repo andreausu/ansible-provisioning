@@ -2,7 +2,11 @@ server {
 	listen 80;
 
 	server_name  {{ snake_domain }};
+{% if dev %}
 	root         /var/www/snake_new/web;
+	{% else %}
+	root         /var/www/snake_new/current/web;
+{% endif %}
 
 	access_log   /var/log/nginx/{{ snake_domain }}.access.log  main;
 	error_log    /var/log/nginx/{{ snake_domain }}.error.log error;
@@ -12,8 +16,13 @@ server {
 	}
 
 	location / {
+	{% if dev %}
 		index app_dev.php;
 		try_files $uri $uri/ /app_dev.php?$query_string;
+	{% else %}
+		index app.php;
+		try_files $uri $uri/ /app.php?$query_string;
+	{% endif %}
 	}
 
 	location ~ ^/(app_dev|app)\.php$ {
