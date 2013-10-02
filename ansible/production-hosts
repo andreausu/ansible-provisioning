@@ -1,0 +1,5 @@
+[main]
+prod-server
+
+[code_management]
+gitlab-server

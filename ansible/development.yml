@@ -1,0 +1,21 @@
+---
+- hosts: main
+  user: vagrant
+  sudo: yes
+
+  roles:
+    - base
+  #  - mysql
+    - web
+  #  - redis
+
+- hosts: gitlab
+  user: vagrant
+  sudo: yes
+
+  vars:
+    - extra_path: ~/.gem/ruby/2.0.0/bin
+
+  roles:
+    - base
+    - gitlab

@@ -1,0 +1,9 @@
+---
+hosts: main
+user: root
+sudo: no
+
+roles:
+  - base
+  - web
+  - redis

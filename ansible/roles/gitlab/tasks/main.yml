@@ -1,0 +1,152 @@
+---
+- name: Ensure git user is present
+  user: name=git generate_ssh_key=yes
+
+- name: Ensure gitlab-ci domain points to 127.0.0.1
+  lineinfile: dest=/etc/hosts regexp='127\.0\.0\.1 $gitlab_domain' line='127.0.0.1 $gitlab_domain' owner=root group=root mode=0644
+
+- name: Ensure required PPAs are present
+  apt_repository: repo={{ item }} update_cache=yes
+  with_items:
+    - 'ppa:git-core/ppa'
+    - 'ppa:spuul/ruby'
+    - 'ppa:rwky/redis'
+
+- name: Ensure required packages are installed
+  apt: pkg='{{ item }}' state=present
+  with_items:
+    - git
+    - ruby2.0
+    - ruby2.0-dev
+    - build-essential
+    - zlib1g-dev
+    - libyaml-dev
+    - libssl-dev
+    - libgdbm-dev
+    - libreadline-dev
+    - libncurses5-dev
+    - libffi-dev
+    - curl
+    - redis-server
+    - checkinstall
+    - libxml2-dev
+    - libxslt1-dev
+    - libcurl4-openssl-dev
+    - libicu-dev
+    - postfix
+    - mysql-server
+    - mysql-client
+    - libmysqlclient-dev
+    - nginx
+    - python-mysqldb
+
+- name: Ensure bundler is installed
+  gem: name=bundler state=present user_install=no
+
+- name: Ensure gitlab shell is present
+  git: repo=https://github.com/gitlabhq/gitlab-shell.git dest=/home/git/gitlab-shell version=v1.7.1 update=no
+  sudo_user: git
+
+- name: Ensure configs are in place
+  shell: cp config.yml.example config.yml && ruby -pi -e "gsub(/http:\/\/localhost\//, 'http://$gitlab_domain/')" config.yml chdir=/home/git/gitlab-shell creates=config.yml
+  sudo_user: git
+
+- name: Ensure lock directory is present
+  file: path=/home/git/do_not_remove state=directory
+  sudo_user: git
+
+- name: Run gitlab-shell setup
+  command: ./bin/install chdir=/home/git/gitlab-shell creates=/home/git/repositories/
+  sudo_user: git
+
+
+# 'localhost' needs to be the last item for idempotency, see
+# http://ansible.cc/docs/modules.html#mysql-user
+- name: update mysql root password for all root accounts
+  mysql_user: name=root host=$item check_implicit_admin=yes password=$root_db_password login_user=root login_password=$root_db_password
+  with_items:
+    - $ansible_hostname
+    - 127.0.0.1
+    - ::1
+    - localhost
+
+- name: ensure anonymous users are not in the database
+  mysql_user: name='' host=$item state=absent login_user=root login_password=$root_db_password
+  with_items:
+    - localhost
+    - $inventory_hostname
+
+- name: remove the test database
+  mysql_db: name=test state=absent login_user=root login_password=$root_db_password
+
+
+
+- name: Ensure gitlab DB is present
+  mysql_db: name='gitlabhq_production' collation=utf8_unicode_ci encoding=utf8 state=present login_user=root login_password=$root_db_password
+
+- name: Ensure gitlab mysql user is present
+  mysql_user: name='gitlab' password=$root_db_password host=localhost state=present login_user=root login_password=$root_db_password priv='gitlabhq_production.*:SELECT,LOCK TABLES,INSERT,UPDATE,DELETE,CREATE,DROP,INDEX,ALTER'
+
+- name: Ensure gitlab repo is present
+  git: repo='https://github.com/gitlabhq/gitlabhq.git' dest=/home/git/gitlab version=6-1-stable update=no
+  sudo_user: git
+
+- name: Ensure gitlab config is in place
+  shell: cp config/gitlab.yml.example config/gitlab.yml && ruby -pi -e "gsub(/localhost/, '$gitlab_domain')" config/gitlab.yml chdir=/home/git/gitlab creates=config/gitlab.yml
+  sudo_user: git
+
+- name: Ensure Unicorn config is in place
+  shell: cp config/unicorn.rb.example config/unicorn.rb chdir=/home/git/gitlab creates=config/unicorn.rb
+  sudo_user: git
+
+- name: Ensure Databases config is in place
+  shell: cp config/database.yml.mysql config/database.yml && ruby -pi -e "gsub(/root/, 'gitlab')" config/database.yml && ruby -pi -e "gsub(/secure password/, '$root_db_password')" config/database.yml chdir=/home/git/gitlab creates=config/database.yml
+  sudo_user: git
+
+- name: Ensure directories are present
+  file: path='{{ item }}' state=directory
+  with_items:
+    - /home/git/gitlab-satellites
+    - /home/git/gitlab/tmp/pids
+    - /home/git/gitlab/tmp/sockets
+    - /home/git/gitlab/public/uploads
+  sudo_user: git
+
+- name: Ensure required gem is installed
+  gem: name=charlock_holmes version='0.6.9.4' state=present user_install=no
+
+- name: Run bundler
+  shell: bundle install --deployment --without development test postgres aws && touch /home/git/do_not_remove/bundler chdir=/home/git/gitlab creates=/home/git/do_not_remove/bundler
+  sudo_user: git
+
+- name: Ensure git is correctly configured
+  shell: git config --global user.name "GitLab" && git config --global user.email "gitlab@$gitlab_domain" && git config --global core.autocrlf input
+
+- name: Ensure gitlab DB is setup
+  shell: bundle exec rake gitlab:setup RAILS_ENV=production force=yes && touch /home/git/do_not_remove/db_setup chdir=/home/git/gitlab creates=/home/git/do_not_remove/db_setup
+  sudo_user: git
+
+- name: Ensure init script for gitlab is in place
+  command: cp lib/support/init.d/gitlab /etc/init.d/gitlab chdir=/home/git/gitlab creates=/etc/init.d/gitlab
+
+- name: Ensure that gitlab's init script has the correct permissions
+  file: path=/etc/init.d/gitlab mode=0755 state=file
+
+- name: Ensure required services are started and will automatically start at boot
+  service: name={{ item }} enabled=yes state=started
+  with_items:
+    - gitlab
+    - nginx
+
+- name: Ensure nginx is configured
+  shell: cp lib/support/nginx/gitlab /etc/nginx/sites-available/gitlab && ruby -pi -e "gsub(/YOUR_SERVER_FQDN/, '$gitlab_domain')" /etc/nginx/sites-available/gitlab chdir=/home/git/gitlab creates=/etc/nginx/sites-available/gitlab
+  notify:
+    - check nginx conf
+    - reload nginx
+
+- name: Ensure nginx vhost is enabled
+  file: src=/etc/nginx/sites-available/gitlab path=/etc/nginx/sites-enabled/gitlab state=link
+  notify:
+    - check nginx conf
+    - reload nginx
+

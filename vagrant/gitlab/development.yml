@@ -1,0 +1,12 @@
+---
+- hosts: gitlab
+  user: vagrant
+  sudo: yes
+
+  vars:
+    - extra_path: /home/git/.gem/ruby/2.0.0/bin
+
+  roles:
+    - base
+    - gitlab
+    - gitlab-ci

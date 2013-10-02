@@ -1,0 +1,115 @@
+---
+- name: Ensure gitlab_ci user is present
+  user: name=gitlab_ci generate_ssh_key=yes
+
+- name: Ensure gitlab-ci domain points to 127.0.0.1
+  lineinfile: dest=/etc/hosts regexp='127\.0\.0\.1 $gitlab_ci_domain' line='127.0.0.1 $gitlab_ci_domain' owner=root group=root mode=0644
+
+- name: Ensure required PPAs are present
+  apt_repository: repo={{ item }} update_cache=yes
+  with_items:
+    - 'ppa:git-core/ppa'
+    - 'ppa:spuul/ruby'
+    - 'ppa:rwky/redis'
+
+- name: Ensure required packages are installed
+  apt: pkg='{{ item }}' state=present
+  with_items:
+    - ruby2.0
+    - ruby2.0-dev
+    - build-essential
+    - wget
+    - curl
+    - checkinstall
+    - libxml2-dev
+    - libxslt1-dev
+    - libcurl4-openssl-dev
+    - libreadline6-dev
+    - libc6-dev
+    - libssl-dev
+    - libmysql++-dev
+    - zlib1g-dev
+    - openssh-server
+    - git
+    - libyaml-dev
+    - postfix
+    - libpq-dev
+    - libicu-dev
+    - redis-server
+    - mysql-server
+    - mysql-client
+    - libmysqlclient-dev
+
+- name: Ensure bundler is installed
+  gem: name=bundler state=present user_install=no
+
+- name: Ensure lock directory is present
+  file: path=/home/gitlab_ci/do_not_remove state=directory
+  sudo_user: gitlab_ci
+
+- name: Ensure gitlab shell is present
+  git: repo=https://github.com/gitlabhq/gitlab-ci.git dest=/home/gitlab_ci/gitlab-ci update=no
+  sudo_user: gitlab_ci
+
+- name: Ensure application config is in place
+  shell: cp config/application.yml.example config/application.yml && ruby -pi -e "gsub(/https:\/\/dev.gitlab.org/, 'http://$gitlab_domain')" config/application.yml chdir=/home/gitlab_ci/gitlab-ci creates=config/application.yml
+  sudo_user: gitlab_ci
+
+- name: Ensure puma config is in place
+  command: cp config/puma.rb.example config/puma.rb chdir=/home/gitlab_ci/gitlab-ci creates=config/puma.rb
+  sudo_user: gitlab_ci
+
+- name: Ensure directories are present
+  file: path='{{ item }}' state=directory
+  with_items:
+    - /home/gitlab_ci/gitlab-ci/tmp/pids
+    - /home/gitlab_ci/gitlab-ci/tmp/sockets
+  sudo_user: gitlab_ci
+
+- name: Run bundler
+  shell: bundle install --without development test postgres --deployment && touch /home/gitlab_ci/do_not_remove/bundler chdir=/home/gitlab_ci/gitlab-ci creates=/home/gitlab_ci/do_not_remove/bundler
+  sudo_user: gitlab_ci
+
+
+- name: Ensure gitlab DB is present
+  mysql_db: name='gitlab_ci_production' collation=utf8_unicode_ci encoding=utf8 state=present login_user=root login_password=$root_db_password
+
+- name: Ensure gitlab mysql user is present
+  mysql_user: name='gitlab_ci' password=$root_db_password host=localhost state=present login_user=root login_password=$root_db_password priv='gitlab_ci_production.*:SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,INDEX,ALTER'
+
+
+- name: Ensure Databases config is in place
+  shell: cp config/database.yml.mysql config/database.yml && ruby -pi -e "gsub(/root/, 'gitlab_ci')" config/database.yml && ruby -pi -e "gsub(/secure password/, '$root_db_password')" config/database.yml chdir=/home/gitlab_ci/gitlab-ci creates=config/database.yml
+  sudo_user: gitlab_ci
+
+- name: Ensure gitlab_ci DB is setup
+  shell: bundle exec rake db:setup RAILS_ENV=production force=yes && touch /home/gitlab_ci/do_not_remove/db_setup chdir=/home/gitlab_ci/gitlab-ci creates=/home/gitlab_ci/do_not_remove/db_setup
+  sudo_user: gitlab_ci
+
+- name: Ensure gitlab_ci schedules are setup
+  shell: bundle exec whenever -w RAILS_ENV=production force=yes && touch /home/gitlab_ci/do_not_remove/schedules_setup chdir=/home/gitlab_ci/gitlab-ci creates=/home/gitlab_ci/do_not_remove/schedules_setup
+  sudo_user: gitlab_ci
+
+- name: Ensure init script for gitlab is in place
+  command: cp lib/support/init.d/gitlab_ci /etc/init.d/gitlab_ci chdir=/home/gitlab_ci/gitlab-ci creates=/etc/init.d/gitlab_ci
+
+- name: Ensure that gitlab_ci's init script has the correct permissions
+  file: path=/etc/init.d/gitlab_ci mode=0755 state=file
+
+- name: Ensure required services are started and will automatically start at boot
+  service: name={{ item }} enabled=yes state=started
+  with_items:
+    - gitlab_ci
+
+- name: Ensure nginx is configured
+  shell: cp lib/support/nginx/gitlab_ci /etc/nginx/sites-available/gitlab_ci && ruby -pi -e "gsub(/ci.gitlab.org/, '$gitlab_ci_domain')" /etc/nginx/sites-available/gitlab_ci && ruby -pi -e "gsub(/\sdefault_server/, '')" /etc/nginx/sites-available/gitlab_ci chdir=/home/gitlab_ci/gitlab-ci creates=/etc/nginx/sites-available/gitlab_ci
+  notify:
+    - check nginx conf
+    - reload nginx
+
+- name: Ensure nginx vhost is enabled
+  file: src=/etc/nginx/sites-available/gitlab_ci path=/etc/nginx/sites-enabled/gitlab_ci state=link
+  notify:
+    - check nginx conf
+    - reload nginx
+

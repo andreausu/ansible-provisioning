@@ -1,0 +1,29 @@
+server {
+	listen 80 default_server;
+	server_name _;
+	return 403;
+}
+
+server {
+	listen 80;
+
+	server_name  127.0.0.1 localhost;
+	root         /var/www/default;
+
+	location ~ ^/(status|ping)$ {
+		access_log   off;
+		try_files            $uri =404;
+		fastcgi_pass         unix:/tmp/default.php-fpm.sock;
+		fastcgi_buffer_size  32k;
+		fastcgi_buffers      32 8k;
+	}
+
+	location /nginx_status {
+		stub_status on;
+		access_log   off;
+	}
+
+	location / {
+		index    index.html index.htm index.php;
+	}
+}
