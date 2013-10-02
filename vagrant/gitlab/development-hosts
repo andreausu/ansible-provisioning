@@ -1,2 +1,2 @@
 [gitlab]
-default ansible_ssh_host=127.0.0.1 ansible_ssh_port=2222 root_db_password=provaz gitlab_domain=gitlab.facile.it gitlab_ci_domain=gitlabci.facile.it
+default ansible_ssh_host=127.0.0.1 ansible_ssh_port=2222 root_db_password=provaz gitlab_domain=gitlab-snake.facile.it gitlab_ci_domain=gitlabci-snake.facile.it
