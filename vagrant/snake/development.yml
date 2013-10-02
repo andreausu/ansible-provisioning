@@ -1,0 +1,12 @@
+---
+- hosts: main
+  user: vagrant
+  sudo: yes
+
+  vars:
+    - extra_path: ~/.gem/ruby/2.0.0/bin
+
+  roles:
+    - base
+    - web
+    - redis
