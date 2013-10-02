@@ -1,11 +1,11 @@
 - name: Ensures required PPAs are present
-  apt_repository: repo='{{ item }}' update_cache=yes
+  apt_repository: repo='$item' update_cache=yes
   with_items:
     - 'ppa:ondrej/php5'
     - 'ppa:nginx/stable'
 
 - name: Ensures required packages are installed
-  apt: pkg={{ item }} state=present
+  apt: pkg='$item' state=present
   with_items:
     - php5
     - php5-fpm
@@ -13,13 +13,13 @@
     - nginx
 
 - name: Ensures services are started
-  service: name={{ item }} state=started
+  service: name='$item' state=started
   with_items:
     - nginx
     - php5-fpm
 
 - name: Ensures nginx configuration file is at the latest version.
-  copy: src={{ item }} dest=/etc/nginx/
+  copy: src='$item' dest=/etc/nginx/
   with_items:
     - nginx.conf
     - fastcgi_params
@@ -28,9 +28,16 @@
     - reload nginx
 
 - name: Ensures nginx vhosts are at the latest version.
-  copy: src={{ item }} dest=/etc/nginx/sites-enabled/
+  template: src='$item' dest=/etc/nginx/sites-enabled/
   with_fileglob:
     - sites-enabled/*
   notify:
     - check nginx conf
     - reload nginx
+
+- name: Ensures nginx vhosts are at the latest version.
+  template: src='$item' dest=/etc/php5/fpm-d/
+  with_fileglob:
+    - fpm.d/*
+  notify:
+    - reload php-fpm

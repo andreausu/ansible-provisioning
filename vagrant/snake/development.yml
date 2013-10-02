@@ -3,10 +3,13 @@
   user: vagrant
   sudo: yes
 
-  vars:
-    - extra_path: ~/.gem/ruby/2.0.0/bin
+  #vars:
+  #  - extra_path: ~/.gem/ruby/2.0.0/bin
 
   roles:
     - base
     - web
-    - redis
+    #- redis
+    #- php-dev-tools
+    #- node
+    #- mysql

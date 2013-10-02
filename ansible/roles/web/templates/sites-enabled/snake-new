@@ -1,11 +1,11 @@
 server {
 	listen 80;
 
-	server_name  snake-new.facile.it;
+	server_name  {{ snake_domain }};
 	root         /var/www/snake_new/current/web;
 
-	access_log   /var/log/nginx/snake_new.access.log  main;
-	error_log    /var/log/nginx/snake_new.error.log error;
+	access_log   /var/log/nginx/{{ snake_domain }}.access.log  main;
+	error_log    /var/log/nginx/{{ snake_domain }}.error.log error;
 
 	location ~* \.(jpg|jpeg|gif|css|png|js|ico)$ {
 		expires 35d;
