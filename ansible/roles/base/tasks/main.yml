@@ -12,3 +12,4 @@
   with_items:
    - python-software-properties
    - ntp
+   - curl

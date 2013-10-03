@@ -8,18 +8,16 @@
   apt: pkg='$item' state=present
   with_items:
     - php5
+    - php5-dev
+    - php-pear
     - php5-fpm
     - php5-cli
+    - php5-intl
+    - php5-mysql
     - nginx
 
 - name: Ensure php-fpm log directory exists
   file: path=/var/log/php-fpm state=directory
-
-- name: Ensures services are started
-  service: name='$item' state=started
-  with_items:
-    - nginx
-    - php5-fpm
 
 - name: Ensures nginx configuration file is at the latest version.
   copy: src='$item' dest=/etc/nginx/
@@ -38,9 +36,72 @@
     - check nginx conf
     - reload nginx
 
+- name: Ensures ngnx is started
+  service: name=nginx state=started
+
+- name: Ensures php-fpm is restarted
+  service: name=php5-fpm state=restarted
+
 - name: Ensures php-fpm pools are at the latest version.
   template: src='$item' dest=/etc/php5/fpm/pool.d/
   with_fileglob:
     - ../templates/php/fpm.d/*
   notify:
+    - restart php-fpm
+
+- name: Ensures php-fpm pools are at the latest version.
+  template: src=php/php.ini dest=/etc/php5/ owner=root group=root
+  notify:
     - reload php-fpm
+
+- name: Ensures there's only a php.ini not that fragmented bullshit ubuntu comes with
+  file:
+    src=/etc/php5/php.ini
+    dest=/etc/php5/$item/php.ini
+    owner=root group=root state=link
+    force=yes
+  with_items:
+   - fpm
+   - cli
+
+- name: Ensures mysql and mysqli are disabled
+  file: path='$item' state=absent
+  with_items:
+    - /etc/php5/fpm/conf.d/20-mysqli.ini
+    - /etc/php5/fpm/conf.d/20-mysql.ini
+    - /etc/php5/cli/conf.d/20-mysqli.ini
+    - /etc/php5/cli/conf.d/20-mysql.ini
+  notify:
+    - reload php-fpm
+
+- name: Ensures opcache config is correct
+  template: src=php/mods-available/opcache.ini.j2 dest=/etc/php5/mods-available/opcache.ini
+  notify:
+    - reload php-fpm
+
+- name: Ensures composer is installed
+  shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin && mv /usr/bin/composer.phar /usr/bin/composer creates=/usr/bin/composer
+
+#- name: Ensures there's only a php.ini not that fragmented bullshit ubuntu comes with
+#  file:
+#    src=/etc/php5/php.ini
+#    dest=/etc/php5/cli/php.ini
+#    owner=root group=root state=link
+
+# PEAR Packages
+# ####################
+- name: PHP | PHPDev | Update pear packages
+  command: pear upgrade
+
+- name: PHP | PHPDev | Set pear auto-discover
+  command: pear config-set auto_discover 1
+
+- name: PHP | PHPDev | Pear install the PHP QA Toolchain
+  command: pear install pear.phpqatools.org/phpqatools creates=/usr/bin/phpunit
+  # this fails often (dns problems, pear problems, etc. So just ignore the errors and continue.)
+  ignore_errors: True
+
+# PECL Packages
+# #####################
+
+- include: pecl.yml package=redis version=stable stdin=
