@@ -21,6 +21,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "ansible" do |ansible|
     ansible.inventory_path = "development-hosts"
     ansible.playbook = "development.yml"
+    ansible.verbose = "v"
   end
 
   config.vm.provider "virtualbox" do |v|
@@ -29,7 +30,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.synced_folder ".", "/vagrant", :disabled => true
 
-  config.vm.synced_folder "/var/www/snake_ws2", "/var/www/snake_new", nfs: true
+  config.vm.synced_folder "/var/www/snake_ws2", "/var/www/snake_new" #, nfs: true
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
