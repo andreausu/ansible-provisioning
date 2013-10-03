@@ -1,0 +1,10 @@
+---
+- name: Ensure required PPAs are present
+  apt_repository: repo='$item' update_cache=yes
+  with_items:
+    - 'ppa:chris-lea/node.js'
+
+- name: Ensure required packages are installed
+  apt: pkg='$item' state=present
+  with_items:
+    - nodejs

@@ -11,8 +11,8 @@
 
   roles:
     - base
+    - mysql
     - web
-    #- redis
+    - redis
+    - node
     #- php-dev-tools
-    #- node
-    #- mysql

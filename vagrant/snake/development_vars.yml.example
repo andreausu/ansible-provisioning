@@ -1,3 +1,6 @@
 ---
 snake_domain: local.example.org
 dev: true
+db_password_root: changeme
+db_password_snake: changeme
+db_password_energia: changeme

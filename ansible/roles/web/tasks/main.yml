@@ -1,8 +1,12 @@
+- name: Ensures nginx's repo key is present
+  apt_key: url=http://nginx.org/keys/nginx_signing.key state=present
+
 - name: Ensures required PPAs are present
   apt_repository: repo='$item' update_cache=yes
   with_items:
     - 'ppa:ondrej/php5'
-    - 'ppa:nginx/stable'
+    - 'deb http://nginx.org/packages/ubuntu/ precise nginx'
+    - 'deb-src http://nginx.org/packages/ubuntu/ precise nginx'
 
 - name: Ensures required packages are installed
   apt: pkg='$item' state=present
@@ -14,12 +18,22 @@
     - php5-cli
     - php5-intl
     - php5-mysql
+    - php5-mysqlnd
     - nginx
 
 - name: Ensure php-fpm log directory exists
   file: path=/var/log/php-fpm state=directory
 
-- name: Ensures nginx configuration file is at the latest version.
+- name: Ensure nginx sites* dirs are present
+  file: path=/etc/nginx/$item state=directory
+  with_items:
+    - 'sites-available'
+    - 'sites-enabled'
+
+- name: Ensure default nginx conf.d directory is deleted
+  file: path=/etc/nginx/conf.d state=absent
+
+- name: Ensure nginx configuration file is at the latest version.
   copy: src='$item' dest=/etc/nginx/
   with_items:
     - nginx.conf
@@ -28,7 +42,7 @@
     - check nginx conf
     - reload nginx
 
-- name: Ensures nginx vhosts are at the latest version.
+- name: Ensure nginx vhosts are at the latest version.
   template: src='$item' dest=/etc/nginx/sites-enabled/
   with_fileglob:
     - ../templates/sites-enabled/*
@@ -36,25 +50,25 @@
     - check nginx conf
     - reload nginx
 
-- name: Ensures ngnx is started
+- name: Ensure ngnx is started
   service: name=nginx state=started
 
-- name: Ensures php-fpm is restarted
+- name: Ensure php-fpm is restarted
   service: name=php5-fpm state=restarted
 
-- name: Ensures php-fpm pools are at the latest version.
+- name: Ensure php-fpm pools are at the latest version.
   template: src='$item' dest=/etc/php5/fpm/pool.d/
   with_fileglob:
     - ../templates/php/fpm.d/*
   notify:
     - restart php-fpm
 
-- name: Ensures php-fpm pools are at the latest version.
+- name: Ensure php-fpm pools are at the latest version.
   template: src=php/php.ini dest=/etc/php5/ owner=root group=root
   notify:
-    - reload php-fpm
+    - restart php-fpm
 
-- name: Ensures there's only a php.ini not that fragmented bullshit ubuntu comes with
+- name: Ensure there's only a php.ini not that fragmented bullshit ubuntu comes with
   file:
     src=/etc/php5/php.ini
     dest=/etc/php5/$item/php.ini
@@ -64,7 +78,7 @@
    - fpm
    - cli
 
-- name: Ensures mysql and mysqli are disabled
+- name: Ensure mysql and mysqli are disabled
   file: path='$item' state=absent
   with_items:
     - /etc/php5/fpm/conf.d/20-mysqli.ini
@@ -72,21 +86,15 @@
     - /etc/php5/cli/conf.d/20-mysqli.ini
     - /etc/php5/cli/conf.d/20-mysql.ini
   notify:
-    - reload php-fpm
+    - restart php-fpm
 
-- name: Ensures opcache config is correct
+- name: Ensure opcache config is correct
   template: src=php/mods-available/opcache.ini.j2 dest=/etc/php5/mods-available/opcache.ini
   notify:
-    - reload php-fpm
+    - restart php-fpm
 
-- name: Ensures composer is installed
+- name: Ensure composer is installed
   shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin && mv /usr/bin/composer.phar /usr/bin/composer creates=/usr/bin/composer
-
-#- name: Ensures there's only a php.ini not that fragmented bullshit ubuntu comes with
-#  file:
-#    src=/etc/php5/php.ini
-#    dest=/etc/php5/cli/php.ini
-#    owner=root group=root state=link
 
 # PEAR Packages
 # ####################

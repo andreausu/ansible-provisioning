@@ -4,7 +4,7 @@
 - name: reload nginx
   service: name=nginx state=reloaded
 
-- name: reload php-fpm
+- name: reload php-fpm # NON FUNZIONA PERCHE' IL MAINTAINER DELLA PPA E' BRAVO
   service: name=php5-fpm state=reloaded
 
 - name: restart php-fpm
