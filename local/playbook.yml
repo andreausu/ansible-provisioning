@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  connection: local
+
+  tasks:
+
+    - name: Ensure required packages are installed
+      local_action: homebrew name=node state=present
+      when: ansible_distribution == 'MacOSX'
+
+    - name: Ensure required PPA is present
+      local_action: apt_repository repo='ppa:chris-lea/node.js' update_cache=yes
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Ensure required packages are installed
+      local_action: apt pkg='nodejs' state=latest
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Ensure required npm packages are installed
+      npm: name='$item' global=yes state=latest
+      with_items:
+        - coffee-script
+        - brunch
