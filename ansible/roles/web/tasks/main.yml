@@ -1,14 +1,14 @@
-- name: Ensures nginx's repo key is present
+- name: Ensure nginx's repo key is present
   apt_key: url=http://nginx.org/keys/nginx_signing.key state=present
 
-- name: Ensures required PPAs are present
+- name: Ensure required PPAs are present
   apt_repository: repo='$item' update_cache=yes
   with_items:
     - 'ppa:ondrej/php5'
     - 'deb http://nginx.org/packages/ubuntu/ precise nginx'
     - 'deb-src http://nginx.org/packages/ubuntu/ precise nginx'
 
-- name: Ensures required packages are installed
+- name: Ensure required packages are installed
   apt: pkg='$item' state=present
   with_items:
     - php5
@@ -49,11 +49,11 @@
     - check nginx conf
     - reload nginx
 
-- name: Ensure ngnx is started
-  service: name=nginx state=started
+- name: Ensure nginx is started
+  service: name=nginx state=started enabled=yes
 
 - name: Ensure php-fpm is restarted
-  service: name=php5-fpm state=restarted
+  service: name=php5-fpm state=restarted enabled=yes
 
 - name: Ensure php-fpm pools are at the latest version.
   template: src='$item' dest=/etc/php5/fpm/pool.d/
@@ -111,4 +111,5 @@
 # PECL Packages
 # #####################
 
-- include: pecl.yml package=redis version=stable stdin=
+- include: pecl.yml package=redis version=stable stdin= 
+

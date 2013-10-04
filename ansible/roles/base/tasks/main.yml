@@ -1,13 +1,13 @@
-- name: Updates apt cache
+- name: Update apt cache
   apt: update_cache=yes
 
-- name: Ensures all system packages are at the latest version
+- name: Ensure all system packages are at the latest version
   apt: upgrade=dist
 
-- name: Ensures snake user is present
+- name: Ensure snake user is present
   user: name=snake generate_ssh_key=yes
 
-- name: Ensures python-software-properties (add-apt-repository) is installed
+- name: Ensure python-software-properties (add-apt-repository) is installed
   apt: pkg={{ item }} state=present
   with_items:
    - python-software-properties
