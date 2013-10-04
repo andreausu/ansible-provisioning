@@ -1,4 +1,4 @@
-Basil Provisioning
+Ansible Provisioning
 ==============================
 
 Getting Ansible (Ubuntu)
