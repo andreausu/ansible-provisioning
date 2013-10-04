@@ -11,13 +11,13 @@
 - name: Ensure required packages are installed
   apt: pkg='$item' state=present
   with_items:
-    - percona-server-server-5.1
+    - percona-server-server-${mysql_version}
     - python-mysqldb # used by mysql* ansible's modules
 
 
 # Secure MySQL setup
 - name: update mysql root password for all root accounts
-  mysql_user: name=root host=$item check_implicit_admin=yes password=$db_password_root login_user=root login_password=$db_password_root
+  mysql_user: name=root host=$item check_implicit_admin=yes password=$mysql_root_password login_user=root login_password=$mysql_root_password
   with_items:
     - $ansible_hostname
     - 127.0.0.1
@@ -25,24 +25,20 @@
     - localhost
 
 - name: ensure anonymous users are not in the database
-  mysql_user: name='' host=$item state=absent login_user=root login_password=$db_password_root
+  mysql_user: name='' host=$item state=absent login_user=root login_password=$mysql_root_password
   with_items:
     - localhost
     - $inventory_hostname
 
 - name: remove the test database
-  mysql_db: name=test state=absent login_user=root login_password=$db_password_root
+  mysql_db: name=test state=absent login_user=root login_password=$mysql_root_password
 
 
 # Users and DBs setup
-- name: Ensure snake DB is present
-  mysql_db: name='snake' collation=utf8_unicode_ci encoding=utf8 state=present login_user=root login_password=$db_password_root
+- name: Ensure {{ item['name'] }} DB is present
+  mysql_db: name={{ item['name'] }} collation=utf8_unicode_ci encoding=utf8 state=present login_user=root login_password=$mysql_root_password
+  with_items: $mysql_users
 
-- name: Ensure snake mysql user is present
-  mysql_user: name='snake' password=$db_password_energia host=localhost state=present login_user=root login_password=$db_password_root priv='snake.*:ALL'
-
-- name: Ensure energia DB is present
-  mysql_db: name='energia' collation=utf8_unicode_ci encoding=utf8 state=present login_user=root login_password=$db_password_root
-
-- name: Ensure energia mysql user is present
-  mysql_user: name='energia' password=$db_password_energia host=localhost state=present login_user=root login_password=$db_password_root priv='energia.*:ALL'
+- name: Ensure {{ item['name'] }} mysql user is present
+  mysql_user: name='{{ item['name'] }}' password={{ item['password'] }} host=localhost state=present login_user=root login_password=$mysql_root_password priv='{{ item['name'] }}.*:ALL'
+  with_items: $mysql_users

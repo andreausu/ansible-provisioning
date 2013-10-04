@@ -3,8 +3,8 @@
   user: vagrant
   sudo: yes
 
-  vars:
-    - extra_path: /home/git/.gem/ruby/2.0.0/bin
+  vars_files:
+    - development_vars.yml
 
   roles:
     - base

@@ -4,11 +4,12 @@
 - name: Ensure all system packages are at the latest version
   apt: upgrade=dist
 
-- name: Ensure snake user is present
-  user: name=snake generate_ssh_key=yes
+- name: Ensure $item user is present
+  user: name=$item generate_ssh_key=yes
+  with_items: $users
 
 - name: Ensure python-software-properties (add-apt-repository) is installed
-  apt: pkg={{ item }} state=present
+  apt: pkg=$item state=present
   with_items:
    - python-software-properties
    - ntp

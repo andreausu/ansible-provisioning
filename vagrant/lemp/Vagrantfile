@@ -30,7 +30,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.synced_folder ".", "/vagrant", :disabled => true
 
-  config.vm.synced_folder "/var/www/snake_ws2", "/var/www/snake_new", nfs: true
+  config.vm.synced_folder "/var/www", "/var/www", nfs: true
 
   config.vm.network "private_network", ip: "192.168.50.4"
 

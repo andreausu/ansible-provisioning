@@ -1,0 +1,14 @@
+---
+vhost_domain: local.example.org
+project_name: someprojectname
+dev: true
+
+users:
+  - user1
+  - user2
+
+mysql_version: '5.5'
+mysql_root_password: somepass
+mysql_users:
+  - {name: user1, password: somepass}
+  - {name: user2, password: somepass}

@@ -24,13 +24,13 @@ $ ansible-playbook -i local playbook.yml
 Vagrant provisioning
 ------------
 ``` bash
-$ cd vagrant/snake
+$ cd vagrant/lemp
 $ vagrant up
 ```
 
 Remote provisioning
 ------------
 ``` bash
-$ cd vagrant/snake
+$ cd vagrant/lemp
 $ ansible-playbook -i development-hosts development.yml
 ```

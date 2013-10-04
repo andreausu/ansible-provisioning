@@ -1,0 +1,7 @@
+---
+db_password_root: changeme
+db_password_gitlab: changeme
+db_password_gitlabci: changeme
+
+gitlab_domain: gitlab.example.org
+gitlab_ci_domain: gitlabci.example.org
