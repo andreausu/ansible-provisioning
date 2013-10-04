@@ -16,7 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # doesn't already exist on the user's system.
   config.vm.box_url = "http://files.vagrantup.com/precise64.box"
 
-  config.vm.network :forwarded_port, host: 4567, guest: 80
+  #config.vm.network :forwarded_port, host: 4567, guest: 80
 
   config.vm.provision "ansible" do |ansible|
     ansible.inventory_path = "development-hosts"
@@ -30,7 +30,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.synced_folder ".", "/vagrant", :disabled => true
 
-  config.vm.synced_folder "/var/www/snake_ws2", "/var/www/snake_new" #, nfs: true
+  config.vm.synced_folder "/var/www/snake_ws2", "/var/www/snake_new", nfs: true
+
+  config.vm.network "private_network", ip: "192.168.50.4"
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
