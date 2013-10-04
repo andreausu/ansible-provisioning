@@ -1,16 +1,15 @@
 Basil Provisioning
 ==============================
 
-Getting Ansible
+Getting Ansible (Ubuntu)
 ------------
-
-Ubuntu:
 ``` bash
 $ sudo add-apt-repository ppa:rquillo/ansible
 $ sudo apt-get install ansible
 ```
 
-Mac:
+Getting Ansible (Mac OS X)
+------------
 ``` bash
 $ brew install ansible
 ```
