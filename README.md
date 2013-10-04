@@ -3,9 +3,16 @@ Basil Provisioning
 
 Getting Ansible
 ------------
+
+Ubuntu:
 ``` bash
-sudo add-apt-repository ppa:rquillo/ansible
-sudo apt-get install ansible
+$ sudo add-apt-repository ppa:rquillo/ansible
+$ sudo apt-get install ansible
+```
+
+Mac:
+``` bash
+$ brew install ansible
 ```
 
 Local provisioning of node and npm global dependencies
