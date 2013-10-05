@@ -11,9 +11,11 @@ server {
 	access_log   /var/log/nginx/{{ project_name }}.access.log  main;
 	error_log    /var/log/nginx/{{ project_name }}.error.log error;
 
+{% if dev == False %}
 	location ~* \.(jpg|jpeg|gif|css|png|js|ico)$ {
 		expires 35d;
 	}
+{% endif %}
 
 	location / {
 	{% if dev %}

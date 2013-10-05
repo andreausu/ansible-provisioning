@@ -12,7 +12,8 @@
   roles:
     - base
     - mysql
-    - web
+    - nginx
+    - php55-ppa
     - redis
     - node
     #- php-dev-tools

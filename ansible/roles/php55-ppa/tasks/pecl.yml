@@ -34,7 +34,7 @@
 
 - name: Set $package config
   template:
-    src=php/mods-available/${package}.ini.j2
+    src=mods-available/${package}.ini.j2
     dest=/etc/php5/mods-available/${package}.ini
     owner=root group=root mode=0644
 
