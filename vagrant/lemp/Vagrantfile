@@ -1,6 +1,18 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+require 'yaml'
+
+environment = ENV['ENV'] || 'development'
+
+config_file = './' + environment + '_vars.yml'
+
+if !File.exist?(config_file)
+  puts "Configuration file " + config_file + " missing!"
+end
+
+CONFIG = YAML.load_file(config_file)
+
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
@@ -30,7 +42,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.synced_folder ".", "/vagrant", :disabled => true
 
-  config.vm.synced_folder "/Users/andrea/Development/itasa/symfony2", "/var/www/symfony2", nfs: true
+  CONFIG['synced_folders'].each do |item|
+    config.vm.synced_folder item['local'], item['remote'], nfs: true
+  end
 
   config.vm.network "private_network", ip: "192.168.50.4"
 
