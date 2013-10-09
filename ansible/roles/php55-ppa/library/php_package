@@ -71,6 +71,10 @@ def get_installed_version(module):
     cmd = [ module.get_bin_path(module.params['mode'], True) ]
     cmd.append('list')
     (rc, out, err) = module.run_command(cmd, check_rc=True)
+
+    if rc != 0:
+        module.fail_json(msg=err)
+
     for line in out.splitlines():
         match_string = re.escape(module.params['name']) + "\s+(.*)\s+"
         match = re.match(match_string, line)
@@ -84,6 +88,8 @@ def exists(module):
     if module.params['version']:
         if module.params['version'] == installed_version:
             return True
+    elif module.params['state'] == 'latest':
+        return False
     else:
         if installed_version:
             return True
@@ -96,14 +102,12 @@ def uninstall(module):
     cmd = [ module.get_bin_path(module.params['mode'], True) ]
     cmd.append('uninstall')
     cmd.append(module.params['name'])
-    module.run_command(cmd, check_rc=True)
+    return module.run_command(cmd, check_rc=True)
+
 
 def install(module):
-
     if module.check_mode:
         return
-
-    print "prova"
 
     cmd = [ module.get_bin_path(module.params['mode'], True) ]
     cmd.append('install')
@@ -113,7 +117,7 @@ def install(module):
     else:
         cmd.append(module.params['name'])
 
-    module.run_command(cmd, check_rc=True)
+    return module.run_command(cmd, check_rc=True)
 
 def main():
 
@@ -137,14 +141,21 @@ def main():
 
     changed = False
 
+    rc = False
+    out = False
+    err = False
+
     if module.params['state'] in [ 'present', 'latest']:
         if not exists(module):
-            install(module)
+            (rc, out, err) = install(module)
             changed = True
     elif module.params['state'] == 'absent':
         if exists(module):
-            uninstall(module)
+            (rc, out, err) = uninstall(module)
             changed = True
+
+    if rc != 0:
+        module.fail_json(msg=err)
 
     result = {}
     result['name'] = module.params['name']
