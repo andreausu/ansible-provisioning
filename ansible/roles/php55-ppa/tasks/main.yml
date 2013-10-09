@@ -63,23 +63,11 @@
 - name: Ensure composer is installed
   shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin && mv /usr/bin/composer.phar /usr/bin/composer creates=/usr/bin/composer
 
-# PEAR Packages
-# ####################
-- name: PHP | PHPDev | Update pear packages
-  command: pear upgrade
+- name: Ensure phpunit is installed
+  shell: wget -O /usr/local/bin/phpunit https://phar.phpunit.de/phpunit.phar && chmod +x /usr/local/bin/phpunit creates=/usr/local/bin/phpunit
 
-- name: PHP | PHPDev | Set pear auto-discover
-  command: pear config-set auto_discover 1
-
-- name: PHP | PHPDev | Pear install the PHP QA Toolchain
-  command: pear install pear.phpqatools.org/phpqatools creates=/usr/bin/phpunit
-  # this fails often (dns problems, pear problems, etc. So just ignore the errors and continue.)
-  ignore_errors: True
-
-# PECL Packages
-# #####################
-
-- include: pecl.yml package=redis version=stable stdin= 
-
-- name: Ensure oauth pecl package is installed
-  php_package: mode=pecl name=oauth state=present
+- name: Ensure pecl packages are installed
+  php_package: mode=pecl name=$item state=present
+  with_items:
+    - redis
+    - xdebug
