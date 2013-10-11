@@ -1,0 +1,12 @@
+<VirtualHost *:80>
+        ServerAdmin root@localhost
+        ServerName {{ vhost }}
+        DocumentRoot {{ docroot }}
+        <Directory {{ docroot }}>
+                Options Indexes FollowSymLinks MultiViews
+                AllowOverride All
+                Order allow,deny
+                allow from all
+        </Directory>
+        CustomLog /var/log/apache2/{{ vhost }}_access.log combined
+</VirtualHost>

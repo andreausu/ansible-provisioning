@@ -1,0 +1,12 @@
+---
+- name: Apache | Virtualhost add | Push virtualhost configuration template
+  template:
+    src=virtualhost.j2
+    dest=/etc/apache2/sites-available/$vhost
+
+- name: Apache | Virtualhost add | Activate virtual host $vhost
+  command: /usr/sbin/a2ensite $vhost creates=/etc/apache2/sites-enabled/$vhost
+  notify: restart apache
+
+- name: Ensure the domain points to 127.0.0.1
+  lineinfile: dest=/etc/hosts regexp='127\.0\.0\.1 $vhost' line='127.0.0.1 $vhost' owner=root group=root mode=0644

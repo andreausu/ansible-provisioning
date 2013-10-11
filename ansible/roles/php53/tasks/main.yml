@@ -1,0 +1,20 @@
+---
+- name: Ensure required packages are installed
+  apt: pkg='$item' state=present
+  with_items:
+    - php5
+    - php5-dev
+    - php-pear
+    - php5-cli
+    - php5-mysql
+    - php5-intl
+    - php5-xdebug
+    - php5-mcrypt
+    - php5-memcache
+    - php5-curl
+    - php-apc
+  notify: restart apache
+
+- name: Ensure pecl packages are installed
+  php_package: mode=pecl name=$item state=present
+  with_items: redis

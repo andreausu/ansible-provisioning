@@ -1,0 +1,26 @@
+---
+- name: Ensure required packages are installed
+  apt: pkg='$item' state=present
+  with_items:
+    - apache2
+    - libapache2-mod-php5
+
+- name: Ensure Rewrite mod is enabled
+  command: a2enmod rewrite creates=/etc/apache2/mods-enabled/rewrite.load
+  notify: restart apache
+
+#- include: vhost_add.yml vhost=local.facile.it docroot=/var/www/zuzu/www
+- include: vhost_add.yml vhost={{item.domain}} docroot={{item.folder}}
+  with_items: ${virtual_hosts}
+
+#- include: vhost_add.yml vhost=local.snake.facile.it docroot=/var/www/snake/web
+
+#- include: vhost_add.yml vhost=local.ws.facile.it docroot=/var/www/snake_ws/web
+
+- name: Ensure env variable dev is set
+  lineinfile: dest=/etc/apache2/envvars regexp='export APACHE_ARGUMENTS="-D dev"' line='export APACHE_ARGUMENTS="-D dev"' owner=root group=root mode=0644
+  notify: restart apache
+
+- name: Fixes dumbfuck error
+  lineinfile: dest=/etc/apache2/httpd.conf regexp='ServerName localhost' line='ServerName localhost' owner=root group=root mode=0644
+  notify: restart apache

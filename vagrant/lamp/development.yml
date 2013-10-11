@@ -1,0 +1,18 @@
+---
+- hosts: main
+  user: vagrant
+  sudo: yes
+
+  #vars:
+  #  - extra_path: ~/.gem/ruby/2.0.0/bin
+
+  vars_files:
+    - development_vars.yml
+
+  roles:
+    - base
+    - apache
+    - php53
+    - redis
+    - node
+    #- php-dev-tools
