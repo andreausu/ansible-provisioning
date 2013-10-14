@@ -21,6 +21,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "ansible" do |ansible|
     ansible.inventory_path = "development-hosts"
     ansible.playbook = "development.yml"
+    ansible.verbose = "v"
   end
 
   config.vm.provider "virtualbox" do |v|
