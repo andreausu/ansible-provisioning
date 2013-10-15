@@ -3,3 +3,6 @@
 
 - name: reload nginx
   service: name=nginx state=reloaded
+
+- name: restart gitlab
+  service: name=gitlab state=restarted

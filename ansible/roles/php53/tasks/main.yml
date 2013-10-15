@@ -15,6 +15,12 @@
     - php-apc
   notify: restart apache
 
+- name: Ensure composer is installed
+  shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin && mv /usr/bin/composer.phar /usr/bin/composer creates=/usr/bin/composer
+
+- name: Ensure phpunit is installed
+  shell: wget -O /usr/local/bin/phpunit https://phar.phpunit.de/phpunit.phar && chmod +x /usr/local/bin/phpunit creates=/usr/local/bin/phpunit
+
 - name: Ensure pecl packages are installed
   php_package: mode=pecl name=$item state=present
   with_items: redis

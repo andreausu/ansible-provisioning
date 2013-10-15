@@ -89,14 +89,17 @@
 - name: Ensure gitlab config is in place
   template: src=gitlab/gitlab.yml.j2 dest=/home/git/gitlab/config/gitlab.yml
   sudo_user: git
+  notify: restart gitlab
 
 - name: Ensure Unicorn config is in place
   copy: src=gitlab/unicorn.rb dest=/home/git/gitlab/config/unicorn.rb
   sudo_user: git
+  notify: restart gitlab
 
 - name: Ensure Databases config is in place
   template: src=gitlab/database.yml.j2 dest=/home/git/gitlab/config/database.yml
   sudo_user: git
+  notify: restart gitlab
 
 - name: Ensure directories are present
   file: path='$item' state=directory
