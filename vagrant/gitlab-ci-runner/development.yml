@@ -1,0 +1,14 @@
+---
+- hosts: gitlab
+  user: vagrant
+  sudo: yes
+
+  vars_files:
+    - development_vars.yml
+
+  roles:
+    - base
+    - gitlab-ci-runner
+    - php55-ppa
+    - redis
+    - node

@@ -1,0 +1,56 @@
+---
+- name: Ensure gitlab user is present
+  user: name=gitlab_ci_runner generate_ssh_key=no
+
+- name: Ensure required PPAs are present
+  apt_repository: repo='$item' update_cache=yes
+  with_items:
+    - 'ppa:spuul/ruby'
+
+- name: Ensure required packages are installed
+  apt: pkg='$item' state=present
+  with_items:
+    - ruby2.0
+    - ruby2.0-dev
+    - build-essential
+    - wget
+    - curl
+    - libxml2-dev
+    - libxslt1-dev
+    - libcurl4-openssl-dev
+    - libreadline6-dev
+    - libc6-dev
+    - libssl-dev
+    - zlib1g-dev
+    - git-core
+    - libyaml-dev
+    - postfix
+    - libpq-dev
+    - libicu-dev
+
+- name: Ensure the project has been downloaded
+  git: repo=https://github.com/gitlabhq/gitlab-ci-runner.git dest=/home/gitlab_ci_runner/gitlab-ci-runner update=no
+  sudo_user: gitlab_ci_runner
+
+- name: Ensure bundler is installed
+  gem: name=bundler state=present user_install=no
+
+- name: Ensure lock directory is present
+  file: path=/home/gitlab_ci_runner/do_not_remove state=directory
+  sudo_user: gitlab_ci_runner
+
+- name: Run bundler
+  shell: bundle install && touch /home/gitlab_ci_runner/do_not_remove/bundler chdir=/home/gitlab_ci_runner/gitlab-ci-runner creates=/home/gitlab_ci_runner/do_not_remove/bundler
+
+- name: Run gitlab-ci runner setup
+  shell: CI_SERVER_URL=$gitlab_ci_url REGISTRATION_TOKEN=$registration_token bundle exec ./bin/setup && touch /home/gitlab_ci_runner/do_not_remove/runner-setup chdir=/home/gitlab_ci_runner/gitlab-ci-runner creates=/home/gitlab_ci_runner/do_not_remove/runner-setup
+  sudo_user: gitlab_ci_runner
+
+- name: Ensure init script for gitlab-ci-runner is in place
+  command: cp lib/support/init.d/gitlab_ci_runner /etc/init.d/gitlab-ci-runner chdir=/home/gitlab_ci_runner/gitlab-ci-runner creates=/etc/init.d/gitlab-ci-runner
+
+- name: Ensure that gitlab_ci's init script has the correct permissions
+  file: path=/etc/init.d/gitlab-ci-runner mode=0755 state=file
+
+- name: Ensure required services are started and will automatically start at boot
+  service: name=gitlab-ci-runner enabled=yes state=started

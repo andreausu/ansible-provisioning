@@ -1,0 +1,7 @@
+---
+gitlab_ci_url: http://gitlabci.example.org
+registration_token: jkhfweofhiuwiewhfiuewb
+
+vhost_domain: example.org
+project_name: example
+dev: true
