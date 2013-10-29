@@ -11,6 +11,7 @@
 - name: Ensure python-software-properties (add-apt-repository) is installed
   apt: pkg=$item state=present
   with_items:
+   - build-essential
    - python-software-properties
    - ntp
    - curl
