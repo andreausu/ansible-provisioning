@@ -24,3 +24,8 @@
 - name: Ensure pecl packages are installed
   php_package: mode=pecl name=$item state=present
   with_items: redis
+  notify: restart apache
+
+- name: Ensure redis extension is enabled
+  copy: src=redis.ini dest=/etc/php5/conf.d/ owner=root group=root
+  notify: restart apache
