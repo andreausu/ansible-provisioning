@@ -39,12 +39,13 @@
     - libmysqlclient-dev
     - nginx
     - python-mysqldb
+    - logrotate
 
 - name: Ensure bundler is installed
   gem: name=bundler state=present user_install=no
 
 - name: Ensure gitlab shell is present
-  git: repo=https://github.com/gitlabhq/gitlab-shell.git dest=/home/git/gitlab-shell version=v1.7.1 update=no
+  git: repo=https://github.com/gitlabhq/gitlab-shell.git dest=/home/git/gitlab-shell version=v1.7.4 update=no
   sudo_user: git
 
 - name: Ensure configs are in place
@@ -83,7 +84,7 @@
   mysql_user: name='gitlab' password=$db_password_gitlab host=localhost state=present login_user=root login_password=$db_password_root priv='gitlabhq_production.*:SELECT,LOCK TABLES,INSERT,UPDATE,DELETE,CREATE,DROP,INDEX,ALTER'
 
 - name: Ensure gitlab repo is present
-  git: repo='https://github.com/gitlabhq/gitlabhq.git' dest=/home/git/gitlab version=6-1-stable update=no
+  git: repo='https://github.com/gitlabhq/gitlabhq.git' dest=/home/git/gitlab version=6-2-stable update=no
   sudo_user: git
 
 - name: Ensure gitlab config is in place
@@ -100,6 +101,14 @@
   template: src=gitlab/database.yml.j2 dest=/home/git/gitlab/config/database.yml
   sudo_user: git
   notify: restart gitlab
+
+- name: Ensure rack_attack initializer is in place
+  command: 'cp config/initializers/rack_attack.rb.example config/initializers/rack_attack.rb chdir=/home/git/gitlab creates=/home/git/gitlab/config/initializers/rack_attack.rb'
+  sudo_user: git
+  notify: restart gitlab
+
+- name: Ensure logrotate is configured
+  command: 'cp lib/support/logrotate/gitlab /etc/logrotate.d/gitlab chdir=/home/git/gitlab creates=/etc/logrotate.d/gitlab'
 
 - name: Ensure directories are present
   file: path='$item' state=directory
@@ -119,6 +128,7 @@
 
 - name: Ensure git is correctly configured
   shell: git config --global user.name "GitLab" && git config --global user.email "gitlab@$gitlab_domain" && git config --global core.autocrlf input && touch /home/git/do_not_remove/git_config creates=/home/git/do_not_remove/git_config
+  sudo_user: git
 
 - name: Ensure gitlab DB is setup
   shell: bundle exec rake gitlab:setup RAILS_ENV=production force=yes && touch /home/git/do_not_remove/db_setup chdir=/home/git/gitlab creates=/home/git/do_not_remove/db_setup
